@@ -1,309 +1,375 @@
-import React, { useState, useEffect } from 'react'
-import Head from 'next/head'
-import Header from '../components/Layout/Header'
-import Footer from '../components/Layout/Footer'
-import { useAuth } from '../context/AuthContext'
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Head from 'next/head';
 
+/**
+ * Página Dashboard - Visualizar agendamentos e perfil
+ */
 export default function Dashboard() {
-  const { user, token } = useAuth()
-  const [bookings, setBookings] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('bookings')
+  const [activeTab, setActiveTab] = useState('bookings');
 
-  useEffect(() => {
-    if (token) {
-      fetchBookings()
-    }
-  }, [token])
-
-  const fetchBookings = async () => {
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-      const res = await fetch(`${API_URL}/api/bookings/${user?.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setBookings(data.bookings || mockBookings)
-      } else {
-        setBookings(mockBookings)
-      }
-    } catch (err) {
-      console.error('Erro ao carregar agendamentos:', err)
-      setBookings(mockBookings)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const mockBookings = [
+  // Mock data
+  const bookings = [
     {
       id: 1,
-      date: '2026-02-15',
-      time: '14:00',
       service: 'Limpeza Residencial',
-      address: 'Rua A, 123 - Porto Alegre, RS',
+      date: '2024-01-15',
+      time: '14:00',
+      address: 'Rua A, 123',
       status: 'confirmado',
-      price: 120,
-      professional: 'Leidy Silva',
-      rating: 5,
+      price: 150,
+      icon: '🏠'
     },
     {
       id: 2,
-      date: '2026-02-08',
+      service: 'Limpeza de Vidros',
+      date: '2024-01-20',
       time: '10:00',
-      service: 'Limpeza Profunda',
-      address: 'Rua B, 456 - Porto Alegre, RS',
-      status: 'concluido',
-      price: 180,
-      professional: 'Maria Santos',
-      rating: 5,
+      address: 'Rua B, 456',
+      status: 'pendente',
+      price: 100,
+      icon: '🪟'
     },
     {
       id: 3,
-      date: '2026-01-28',
-      time: '16:00',
-      service: 'Limpeza de Vidros',
-      address: 'Rua C, 789 - Porto Alegre, RS',
-      status: 'concluido',
-      price: 100,
-      professional: 'Ana Costa',
-      rating: 4,
-    },
-  ]
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      confirmado: 'bg-blue-100 text-blue-800',
-      concluido: 'bg-green-100 text-green-800',
-      cancelado: 'bg-red-100 text-red-800',
-      pendente: 'bg-yellow-100 text-yellow-800',
+      service: 'Limpeza Profunda',
+      date: '2024-01-25',
+      time: '09:00',
+      address: 'Rua C, 789',
+      status: 'concluído',
+      price: 250,
+      icon: '✨'
     }
-    const statusLabels = {
+  ];
+
+  const userProfile = {
+    name: 'João Silva',
+    email: 'joao@example.com',
+    phone: '+55 51 98030-3740',
+    address: 'Porto Alegre, RS',
+    joinDate: '2023-10-15',
+    totalBookings: 8,
+    totalSpent: 'R$ 1.200,00',
+    rating: 4.8
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'confirmado':
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700';
+      case 'pendente':
+        return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700';
+      case 'concluído':
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700';
+      default:
+        return 'bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-300';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
       confirmado: '✓ Confirmado',
-      concluido: '✓ Concluído',
-      cancelado: '✗ Cancelado',
       pendente: '⏳ Pendente',
-    }
-    return `${badges[status] || ''} px-3 py-1 rounded-full text-sm font-semibold`
-  }
-
-  if (!user) {
-    return (
-      <>
-        <Head>
-          <title>Minha Conta - Leidy Cleaner</title>
-        </Head>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-grow container py-12">
-            <div className="max-w-2xl mx-auto text-center">
-              <h1 className="text-3xl font-bold mb-4">Acesso Restrito</h1>
-              <p className="muted mb-6">Por favor, faça login para acessar seu dashboard.</p>
-              <a href="/agendar" className="btn-primary">Agendar Agora</a>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </>
-    )
-  }
+      concluído: '✓ Concluído'
+    };
+    return labels[status] || status;
+  };
 
   return (
     <>
       <Head>
-        <title>Minha Conta - Leidy Cleaner</title>
-        <meta name="description" content="Visualize seu histórico de agendamentos e gerenecie sua conta." />
+        <title>Dashboard - Leidy Cleaner</title>
+        <meta name="description" content="Gerenciar seus agendamentos e perfil na Leidy Cleaner" />
       </Head>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow container py-12">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              {/* Profile Summary */}
-              <div className="card md:col-span-1">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-2xl">
-                    {user?.name?.charAt(0) || 'U'}
-                  </div>
-                  <h3 className="font-bold text-lg">{user?.name || 'Usuário'}</h3>
-                  <p className="text-sm muted">{user?.email}</p>
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-2xl font-bold text-emerald-600">{bookings.length}</p>
-                    <p className="text-xs muted">Agendamentos</p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Stats */}
-              <div className="md:col-span-3 grid grid-cols-3 gap-4">
-                <div className="card text-center">
-                  <p className="text-3xl font-bold text-emerald-600">
-                    {bookings.filter(b => b.status === 'concluido').length}
-                  </p>
-                  <p className="text-sm muted">Concluídos</p>
+      <main className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-slate-900 dark:to-slate-950">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <Link href="/">
+              <a className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl">
+                  🧹
                 </div>
-                <div className="card text-center">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {bookings.filter(b => b.status === 'confirmado').length}
-                  </p>
-                  <p className="text-sm muted">Confirmados</p>
-                </div>
-                <div className="card text-center">
-                  <p className="text-3xl font-bold text-emerald-600">
-                    R$ {bookings.reduce((sum, b) => sum + (b.price || 0), 0)}
-                  </p>
-                  <p className="text-sm muted">Total Gasto</p>
-                </div>
-              </div>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                  Leidy Cleaner
+                </h1>
+              </a>
+            </Link>
+            <button className="px-6 py-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-bold hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors">
+              Sair
+            </button>
+          </div>
+        </header>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Welcome Section */}
+          <div className="mb-12">
+            <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
+              Bem-vindo, {userProfile.name}! 👋
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Gerencie seus agendamentos e perfil abaixo
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            {/* Stats Cards */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+              <p className="text-gray-600 dark:text-gray-400 font-semibold mb-2">📅 Total de Agendamentos</p>
+              <p className="text-4xl font-black text-blue-600 dark:text-blue-400 mb-2">
+                {userProfile.totalBookings}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Dos quais 1 está pendente
+              </p>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setTab('bookings')}
-                className={`pb-3 font-semibold transition ${
-                  tab === 'bookings'
-                    ? 'text-emerald-600 border-b-2 border-emerald-600'
-                    : 'text-muted hover:text-emerald-500'
-                }`}
-              >
-                📅 Agendamentos
-              </button>
-              <button
-                onClick={() => setTab('profile')}
-                className={`pb-3 font-semibold transition ${
-                  tab === 'profile'
-                    ? 'text-emerald-600 border-b-2 border-emerald-600'
-                    : 'text-muted hover:text-emerald-500'
-                }`}
-              >
-                👤 Perfil
-              </button>
-              <button
-                onClick={() => setTab('settings')}
-                className={`pb-3 font-semibold transition ${
-                  tab === 'settings'
-                    ? 'text-emerald-600 border-b-2 border-emerald-600'
-                    : 'text-muted hover:text-emerald-500'
-                }`}
-              >
-                ⚙️ Configurações
-              </button>
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+              <p className="text-gray-600 dark:text-gray-400 font-semibold mb-2">💰 Total Gasto</p>
+              <p className="text-4xl font-black text-green-600 dark:text-green-400 mb-2">
+                {userProfile.totalSpent}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Em todos os serviços
+              </p>
             </div>
 
-            {/* Bookings Tab */}
-            {tab === 'bookings' && (
-              <div>
-                {loading ? (
-                  <p className="muted text-center py-8">Carregando agendamentos...</p>
-                ) : bookings.length > 0 ? (
-                  <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <div key={booking.id} className="card">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h4 className="font-bold">{booking.service}</h4>
-                              <span className={getStatusBadge(booking.status)}>
-                                {booking.status === 'confirmado' && '✓ Confirmado'}
-                                {booking.status === 'concluido' && '✓ Concluído'}
-                                {booking.status === 'cancelado' && '✗ Cancelado'}
-                                {booking.status === 'pendente' && '⏳ Pendente'}
-                              </span>
-                            </div>
-                            <p className="text-sm muted mb-2">📅 {new Date(booking.date).toLocaleDateString('pt-BR')} às {booking.time}</p>
-                            <p className="text-sm muted mb-2">📍 {booking.address}</p>
-                            <p className="text-sm muted">👤 Profissional: <strong>{booking.professional}</strong></p>
-                            {booking.rating && (
-                              <p className="text-sm mt-2">⭐ Avaliação: {booking.rating}/5</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-emerald-600">R$ {booking.price}</p>
-                            {booking.status === 'confirmado' && (
-                              <button className="btn-outline mt-3 text-sm">Ver Detalhes</button>
-                            )}
-                            {booking.status === 'concluido' && !booking.rating && (
-                              <button className="btn-outline mt-3 text-sm">Avaliar</button>
-                            )}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+              <p className="text-gray-600 dark:text-gray-400 font-semibold mb-2">⭐ Avaliação</p>
+              <p className="text-4xl font-black text-yellow-600 dark:text-yellow-400 mb-2">
+                {userProfile.rating}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                De satisfação com serviços
+              </p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="mb-8">
+            <div className="flex gap-4 border-b border-gray-200 dark:border-slate-700">
+              <button
+                onClick={() => setActiveTab('bookings')}
+                className={`px-6 py-3 font-bold border-b-2 transition-all ${
+                  activeTab === 'bookings'
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                📅 Meus Agendamentos
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`px-6 py-3 font-bold border-b-2 transition-all ${
+                  activeTab === 'profile'
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                👤 Meu Perfil
+              </button>
+            </div>
+          </div>
+
+          {/* Bookings Tab */}
+          {activeTab === 'bookings' && (
+            <div className="space-y-6">
+              {bookings.length > 0 ? (
+                <>
+                  {bookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl transition-shadow"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">{booking.icon}</div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                              {booking.service}
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              📍 {booking.address}
+                            </p>
                           </div>
                         </div>
+                        <div className={`px-4 py-2 rounded-lg font-bold text-sm ${getStatusColor(booking.status)}`}>
+                          {getStatusLabel(booking.status)}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="card text-center py-8">
-                    <p className="muted mb-4">Você ainda não tem agendamentos</p>
-                    <a href="/agendar" className="btn-primary">Agendar Agora</a>
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* Profile Tab */}
-            {tab === 'profile' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card">
-                  <h3 className="font-bold mb-4">Informações Pessoais</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-semibold muted">Nome</label>
-                      <p className="font-semibold">{user?.name}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            📅 Data
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            {new Date(booking.date).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            🕒 Horário
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            {booking.time}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            💰 Valor
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            R$ {booking.price}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            ID Agendamento
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            #{String(booking.id).padStart(4, '0')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button className="flex-1 px-4 py-2 rounded-lg border-2 border-blue-600 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                          Editar
+                        </button>
+                        <button className="flex-1 px-4 py-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 font-bold hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors">
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold muted">Email</label>
-                      <p className="font-semibold">{user?.email}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold muted">Telefone</label>
-                      <p className="font-semibold">{user?.phone || '+55 51 98030-3740'}</p>
-                    </div>
+                  ))}
+
+                  <Link href="/agendar">
+                    <a className="block w-full px-8 py-4 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-center hover:shadow-lg hover:scale-105 transition-all">
+                      + Agendar Novo Serviço
+                    </a>
+                  </Link>
+                </>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 dark:bg-slate-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-600">
+                  <p className="text-4xl mb-4">📅</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Nenhum agendamento
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Você ainda não tem nenhum agendamento. Faça seu primeiro agora!
+                  </p>
+                  <Link href="/agendar">
+                    <a className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold hover:shadow-lg transition-all">
+                      <span>📅</span>
+                      Agendar Serviço
+                    </a>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  Informações Pessoais
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Nome Completo
+                    </label>
+                    <input
+                      type="text"
+                      value={userProfile.name}
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={userProfile.email}
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      value={userProfile.phone}
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Endereço
+                    </label>
+                    <input
+                      type="text"
+                      value={userProfile.address}
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white bg-gray-50"
+                    />
                   </div>
                 </div>
 
-                <div className="card">
-                  <h3 className="font-bold mb-4">Método de Pagamento</h3>
-                  <div className="space-y-3">
-                    <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <p className="text-sm font-semibold">PIX</p>
-                      <p className="text-xs muted">Chave Aleatória</p>
-                    </div>
-                    <button className="btn-outline w-full text-sm">Adicionar Cartão</button>
-                  </div>
+                <div className="flex gap-4">
+                  <button className="px-8 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
+                    Editar Perfil
+                  </button>
+                  <button className="px-8 py-3 rounded-lg border-2 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                    Mudar Senha
+                  </button>
                 </div>
               </div>
-            )}
 
-            {/* Settings Tab */}
-            {tab === 'settings' && (
-              <div className="card max-w-2xl">
-                <h3 className="font-bold mb-4">Preferências</h3>
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-gray-200 dark:border-slate-700">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  Histórico de Conta
+                </h3>
+
                 <div className="space-y-4">
-                  <label className="flex items-center gap-3">
-                    <input type="checkbox" className="w-4 h-4" defaultChecked />
-                    <span className="text-sm">Receber lembretes por email</span>
-                  </label>
-                  <label className="flex items-center gap-3">
-                    <input type="checkbox" className="w-4 h-4" defaultChecked />
-                    <span className="text-sm">Receber lembretes por SMS</span>
-                  </label>
-                  <label className="flex items-center gap-3">
-                    <input type="checkbox" className="w-4 h-4" defaultChecked />
-                    <span className="text-sm">Receber notificações de promoções</span>
-                  </label>
-                </div>
-
-                <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="font-bold mb-3">Zona de Perigo</h4>
-                  <button className="btn-outline text-red-600 border-red-600">Sair da Conta</button>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-slate-700">
+                    <p className="text-gray-600 dark:text-gray-400">Membro desde</p>
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      {new Date(userProfile.joinDate).toLocaleDateString('pt-BR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-slate-700">
+                    <p className="text-gray-600 dark:text-gray-400">Total de Agendamentos</p>
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      {userProfile.totalBookings}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-gray-600 dark:text-gray-400">Total Gasto</p>
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      {userProfile.totalSpent}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        </main>
-        <Footer />
-      </div>
+            </div>
+          )}
+        </div>
+      </main>
     </>
-  )
+  );
 }
